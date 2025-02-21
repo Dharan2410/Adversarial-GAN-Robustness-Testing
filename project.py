@@ -3,8 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-
-# Generator Network
 class Generator(nn.Module):
     def __init__(self, z_dim=100):
         super(Generator, self).__init__()
@@ -17,8 +15,6 @@ class Generator(nn.Module):
         x = torch.relu(self.fc2(x))
         x = torch.tanh(self.fc3(x))
         return x.view(-1, 1, 28, 28)
-
-# Discriminator Network
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
@@ -32,7 +28,6 @@ class Discriminator(nn.Module):
         x = torch.relu(self.fc2(x))
         return torch.sigmoid(self.fc3(x))
 
-# Classifier Model for MNIST
 class Classifier(nn.Module):
     def __init__(self):
         super(Classifier, self).__init__()
@@ -50,13 +45,11 @@ class Classifier(nn.Module):
         x = torch.relu(self.fc1(x))
         return self.fc2(x)
 
-# Hyperparameters
 z_dim = 100
 batch_size = 64
 epochs = 20
 lr = 0.0002
 
-# Data Loading (e.g., MNIST)
 transform = transforms.Compose([
     transforms.ToTensor(),  
     transforms.Normalize((0.5,), (0.5,))
@@ -64,19 +57,17 @@ transform = transforms.Compose([
 train_data = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
 train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
-# Instantiate Models
 generator = Generator(z_dim=z_dim)
 discriminator = Discriminator()
-classifier_model = Classifier()  # The classifier model for robustness testing
+classifier_model = Classifier() 
 
-# Loss and Optimizers
 criterion = nn.BCELoss()
 gen_optimizer = optim.Adam(generator.parameters(), lr=lr)
 disc_optimizer = optim.Adam(discriminator.parameters(), lr=lr)
 classifier_optimizer = optim.Adam(classifier_model.parameters(), lr=0.001)
 classification_criterion = nn.CrossEntropyLoss()
 
-# Train Classifier (necessary for meaningful robustness test)
+
 print("Training Classifier Model...")
 classifier_model.train()
 for epoch in range(20):  # Short training for demonstration; increase epochs for better accuracy
@@ -88,7 +79,6 @@ for epoch in range(20):  # Short training for demonstration; increase epochs for
         classifier_optimizer.step()
     print(f"Classifier Epoch [{epoch+1}/5], Loss: {loss.item():.4f}")
 
-# Training GAN
 for epoch in range(20):
     for real_data, _ in train_loader:
         current_batch_size = real_data.size(0)
@@ -119,8 +109,7 @@ for epoch in range(20):
         gen_optimizer.step()
 
     print(f"Epoch [{epoch+1}/{epochs}], d_loss: {real_loss + fake_loss:.4f}, g_loss: {gen_loss:.4f}")
-
-# Robustness Testing Function
+    
 def robustness_test(classifier_model, generator, z_dim, num_samples=100):
     generator.eval()
     classifier_model.eval()
@@ -139,6 +128,5 @@ def robustness_test(classifier_model, generator, z_dim, num_samples=100):
     robustness_score = correct / total * 100  # Percentage of correct predictions
     print(f"Robustness Score: {robustness_score:.2f}%")
     return robustness_score
-
-# Example usage of robustness test
+    
 robustness_score = robustness_test(classifier_model, generator, z_dim)
